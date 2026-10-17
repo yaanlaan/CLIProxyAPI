@@ -318,6 +318,13 @@ type DiscoveryConfig struct {
 	AdvertiseManagement bool `yaml:"advertise-management" json:"advertise-management"`
 }
 
+// ManagementUser represents an administrative user with username, password and role.
+type ManagementUser struct {
+	Username string `yaml:"username" json:"username"`
+	Password string `yaml:"password" json:"password"`
+	Role     string `yaml:"role" json:"role"`
+}
+
 // RemoteManagement holds management API configuration under 'remote-management'.
 type RemoteManagement struct {
 	// AllowRemote toggles remote (non-localhost) access to management API.
@@ -331,7 +338,11 @@ type RemoteManagement struct {
 	DisableAutoUpdatePanel bool `yaml:"disable-auto-update-panel"`
 	// PanelGitHubRepository overrides the GitHub repository used to fetch the management panel asset.
 	// Accepts either a repository URL (https://github.com/org/repo) or an API releases endpoint.
-	PanelGitHubRepository string `yaml:"panel-github-repository"`
+		PanelGitHubRepository string `yaml:"panel-github-repository"`
+	// JWTSecret is used to sign and verify management session JWT tokens.
+	JWTSecret string `yaml:"jwt-secret" json:"jwt-secret"`
+	// Users contains configured administrator and operator accounts.
+	Users []ManagementUser `yaml:"users" json:"users"`
 }
 
 // QuotaExceeded defines the behavior when API quota limits are exceeded.

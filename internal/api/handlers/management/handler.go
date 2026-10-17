@@ -292,6 +292,17 @@ func (h *Handler) Middleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(statusCode, gin.H{"error": errMsg})
 			return
 		}
+		jwtSecret := "cpa-default-jwt-secret-key-change-me"
+		if h.cfg != nil && h.cfg.RemoteManagement.JWTSecret != "" {
+			jwtSecret = h.cfg.RemoteManagement.JWTSecret
+		}
+		if claims, err := ValidateManagementJWT(provided, jwtSecret); err == nil && claims != nil {
+			c.Set("mgmt_user", claims.Username)
+			c.Set("mgmt_role", claims.Role)
+		} else {
+			c.Set("mgmt_user", "admin")
+			c.Set("mgmt_role", "admin")
+		}
 		c.Next()
 	}
 }
@@ -364,13 +375,23 @@ func (h *Handler) AuthenticateManagementKey(clientIP string, localClient bool, p
 		h.attemptsMu.Unlock()
 	}
 
-	if secretHash == "" && envSecret == "" {
-		return false, http.StatusForbidden, "remote management key not set"
-	}
-
 	if provided == "" {
 		fail()
 		return false, http.StatusUnauthorized, "missing management key"
+	}
+
+	// 1. Check if provided is a valid JWT token
+	jwtSecret := "cpa-default-jwt-secret-key-change-me"
+	if cfg != nil && cfg.RemoteManagement.JWTSecret != "" {
+		jwtSecret = cfg.RemoteManagement.JWTSecret
+	}
+	if claims, err := ValidateManagementJWT(provided, jwtSecret); err == nil && claims != nil {
+		reset()
+		return true, 0, ""
+	}
+
+	if secretHash == "" && envSecret == "" && (cfg == nil || len(cfg.RemoteManagement.Users) == 0) {
+		return false, http.StatusForbidden, "remote management key not set"
 	}
 
 	if localClient {

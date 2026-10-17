@@ -71,6 +71,22 @@ func ParseConfigBytes(data []byte) (*Config, error) {
 		cfg.RemoteManagement.SecretKey = string(hashed)
 	}
 
+	for i := range cfg.RemoteManagement.Users {
+		u := &cfg.RemoteManagement.Users[i]
+		if u.Password != "" && !looksLikeBcrypt(u.Password) {
+			hashed, errHash := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+			if errHash == nil {
+				u.Password = string(hashed)
+			}
+		}
+		if u.Role == "" {
+			u.Role = "admin"
+		}
+	}
+	if cfg.RemoteManagement.JWTSecret == "" {
+		cfg.RemoteManagement.JWTSecret = "cpa-mgmt-jwt-secret-" + cfg.RemoteManagement.SecretKey
+	}
+
 	cfg.RemoteManagement.PanelGitHubRepository = strings.TrimSpace(cfg.RemoteManagement.PanelGitHubRepository)
 	if cfg.RemoteManagement.PanelGitHubRepository == "" {
 		cfg.RemoteManagement.PanelGitHubRepository = DefaultPanelGitHubRepository

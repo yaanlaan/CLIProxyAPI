@@ -125,6 +125,22 @@ func LoadConfigOptional(configFile string, optional bool) (*Config, error) {
 		_ = SaveConfigPreserveCommentsUpdateNestedScalar(configFile, []string{"remote-management", "secret-key"}, hashed)
 	}
 
+	for i := range cfg.RemoteManagement.Users {
+		u := &cfg.RemoteManagement.Users[i]
+		if u.Password != "" && !looksLikeBcrypt(u.Password) {
+			hashed, errHash := hashSecret(u.Password)
+			if errHash == nil {
+				u.Password = hashed
+			}
+		}
+		if u.Role == "" {
+			u.Role = "admin"
+		}
+	}
+	if cfg.RemoteManagement.JWTSecret == "" {
+		cfg.RemoteManagement.JWTSecret = "cpa-mgmt-jwt-secret-" + cfg.RemoteManagement.SecretKey
+	}
+
 	cfg.RemoteManagement.PanelGitHubRepository = strings.TrimSpace(cfg.RemoteManagement.PanelGitHubRepository)
 	if cfg.RemoteManagement.PanelGitHubRepository == "" {
 		cfg.RemoteManagement.PanelGitHubRepository = DefaultPanelGitHubRepository

@@ -23,10 +23,17 @@ func (s *Server) registerManagementRoutes() {
 
 	s.engine.POST("/v0/management/oauth-callback", s.managementAvailabilityMiddleware(), s.mgmt.PostOAuthCallback)
 	s.engine.GET("/v0/management/oauth-callback", s.managementAvailabilityMiddleware(), s.mgmt.GetOAuthCallback)
+	s.engine.POST("/v0/auth/login", s.managementAvailabilityMiddleware(), s.mgmt.Login)
+	s.engine.POST("/v0/management/login", s.managementAvailabilityMiddleware(), s.mgmt.Login)
+	s.engine.GET("/v0/auth/info", s.managementAvailabilityMiddleware(), s.mgmt.GetAuthInfo)
 
 	mgmt := s.engine.Group("/v0/management")
 	mgmt.Use(s.managementAvailabilityMiddleware(), s.mgmt.Middleware())
 	{
+		mgmt.GET("/user/me", s.mgmt.GetCurrentUser)
+		mgmt.POST("/user/update", s.mgmt.UpdateAccount)
+		mgmt.POST("/user/change-password", s.mgmt.ChangePassword)
+		mgmt.GET("/users", s.mgmt.GetUsers)
 		mgmt.GET("/config", s.mgmt.GetConfig)
 		mgmt.GET("/config.yaml", s.mgmt.GetConfigYAML)
 		mgmt.PUT("/config.yaml", s.mgmt.PutConfigYAML)
